@@ -1,0 +1,8 @@
+{
+    "template": "mars",
+    "to": "jortiz@gmail.com",
+    "from": "javieroc@gmail.com",
+    "locals": {
+        "name": "Diana"
+    }
+}
