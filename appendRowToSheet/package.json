@@ -1,0 +1,19 @@
+{
+  "name": "appendRowToSheet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "dotenv": "^8.1.0",
+    "googleapis": "^42.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "locally": "NODE_ENV=development node locally.js",
+    "build": "npm install && npm run build:zip",
+    "build:zip": "tarball=$(npm list --depth 0 | sed 's/@/-/g; s/ .*/.zip/g; 1q;'); mkdir -p dist; zip -x *.zip -x locally* -x samples\\* -x dist\\* -r ./dist/$tarball *"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
