@@ -5,12 +5,24 @@ const Email = require('email-templates')
 var aws = require('aws-sdk');
 const pug = require('pug')
 
-const s3 = new aws.S3({
+const configSES = {
+  apiVersion : "2010-12-01",
+  accessKeyId : process.env.AWS_SES_KEYID,
+  secretAccessKey : process.env.AWS_SES_ACCESSKEY,
+  region : process.env.AWS_SES_REGION
+}
+
+const configS3 = {
   apiVersion : "2010-12-01",
   accessKeyId : process.env.AWS_S3_KEYID,
   secretAccessKey : process.env.AWS_S3_ACCESSKEY,
   region : process.env.AWS_S3_REGION
-})
+}
+
+console.log('- SES config:', configSES)
+console.log('- S3 config:', configS3)
+
+const s3 = new aws.S3(configS3)
 
 const getS3File = async (bucket = process.env.AWS_S3_DEFAULT_BUCKET, path) => {
   return new Promise((resolve, reject) => {
@@ -40,29 +52,25 @@ const parseJSON = (info = {}) => {
 
 exports.handler = async(event) => {
   const params= parseJSON(event.body)
-  const email = new Email({
-    message: {
-      from: params.from || 'hola@tutellus.com'
-    },
-    render: async (view, locals) => {
-      if (view.endsWith('text')) return ''
-      const template = await getS3File(params.bucket, `${view}.pug`);
-      let html = pug.render(template, locals);
-      return email.juiceResources(html);
-    },
-    // uncomment below to send emails in development/test env:
-    // send: true,
-    transport: {
-      SES: new aws.SES({
-        apiVersion : "2010-12-01",
-        accessKeyId : process.env.AWS_SES_KEYID,
-        secretAccessKey : process.env.AWS_SES_ACCESSKEY,
-        region : process.env.AWS_SES_REGION
-      })
-    },
-  })
-
+  console.log('- body', params);
   try {
+    const email = new Email({
+      message: {
+        from: params.from || 'hola@tutellus.com'
+      },
+      render: async (view, locals) => {
+        if (view.endsWith('text')) return ''
+        const template = await getS3File(params.bucket, `${view}.pug`);
+        let html = pug.render(template, locals);
+        return email.juiceResources(html);
+      },
+      // uncomment below to send emails in development/test env:
+      send: true,
+      transport: {
+        SES: new aws.SES(configSES)
+      },
+    })
+
     const result = await email.send({
       template: params.template || 'mars',
       message: {
